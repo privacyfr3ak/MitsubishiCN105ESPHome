@@ -131,6 +131,7 @@ namespace esphome {
 
         void set_baud_rate(int baud_rate);
         void set_tx_rx_pins(int tx_pin, int rx_pin);
+        void set_rx_pullup(bool pullup);
         //void set_wifi_connected_state(bool state);
         void setupUART();
         void disconnectUART();
@@ -331,7 +332,7 @@ namespace esphome {
         int baud_ = 0;
         int tx_pin_ = -1;
         int rx_pin_ = -1;
-
+        bool rx_pullup_ = false;
 
 
         //HardwareSerial* _HardSerial{ nullptr };

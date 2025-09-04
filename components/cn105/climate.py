@@ -131,6 +131,7 @@ HVACOptionSwitch = cg.global_ns.class_("HVACOptionSwitch", switch.Switch, cg.Com
 def get_uart_pins_from_config(core_config, target_uart_id_str):
     tx_pin_num = -1
     rx_pin_num = -1
+    rx_pullup = False
     uart_config_found = {}
     for uart_conf_item in core_config.get("uart", []):
         if str(uart_conf_item[CONF_ID]) == target_uart_id_str:
@@ -145,11 +146,19 @@ def get_uart_pins_from_config(core_config, target_uart_id_str):
                 tx_pin_num = tx_pin_schema
         rx_pin_schema = uart_config_found.get(CONF_RX_PIN)
         if rx_pin_schema:
-            if isinstance(rx_pin_schema, dict) and "number" in rx_pin_schema:
-                rx_pin_num = rx_pin_schema["number"]
+            if isinstance(rx_pin_schema, dict):
+                if "number" in rx_pin_schema:
+                    rx_pin_num = rx_pin_schema["number"]
+                if "mode" in rx_pin_schema:
+                    rx_pin_mode = rx_pin_schema["mode"]
+                    if isinstance(rx_pin_mode, dict):
+                        if "pullup" in rx_pin_mode:
+                            rx_pullup = rx_pin_mode["pullup"]
+                    elif rx_pin_mode == INPUT_PULLUP:
+                        rx_pullup = true
             elif isinstance(rx_pin_schema, int):
                 rx_pin_num = rx_pin_schema
-    return tx_pin_num, rx_pin_num
+    return tx_pin_num, rx_pin_num, rx_pullup
 
 
 # --- FIN de la fonction d'aide ---
@@ -289,8 +298,9 @@ def to_code(config):
     cg.add(uart_var.set_stop_bits(1))
 
     uart_id_str_for_lookup = str(uart_id_object)
-    tx_pin, rx_pin = get_uart_pins_from_config(CORE.config, uart_id_str_for_lookup)
+    tx_pin, rx_pin, rx_pullup = get_uart_pins_from_config(CORE.config, uart_id_str_for_lookup)
     cg.add(var.set_tx_rx_pins(tx_pin, rx_pin))
+    cg.add(var.set_rx_pullup(rx_pullup))
 
     if CONF_SUPPORTS in config:
         supports = config[CONF_SUPPORTS]

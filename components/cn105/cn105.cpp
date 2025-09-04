@@ -71,6 +71,11 @@ void CN105Climate::set_tx_rx_pins(int tx_pin, int rx_pin) {
 
 }
 
+void CN105Climate::set_rx_pullup(bool pullup) {
+    this->rx_pullup_ = pullup;
+    ESP_LOGI(TAG, "setting rx_pullup to %s", pullup ? "True" : "False");
+}
+
 void CN105Climate::pingExternalTemperature() {
     this->set_timeout(SHEDULER_REMOTE_TEMP_TIMEOUT, this->remote_temp_timeout_, [this]() {
         ESP_LOGW(LOG_ACTION_EVT_TAG, "Remote temperature timeout occured, fall back to internal temperature!");
@@ -139,6 +144,15 @@ void CN105Climate::setupUART() {
         this->initBytePointer();
     } else {
         ESP_LOGW(TAG, "UART n'est pas configuré en SERIAL_8E1");
+    }
+
+    if (this->rx_pullup_) {
+#ifdef USE_ESP32
+        gpio_set_pull_mode(static_cast<gpio_num_t>(this->rx_pin_), GPIO_PULLUP_ONLY);
+#else
+        pinMode(this->rx_pin_, INPUT_PULLUP);
+#endif
+        ESP_LOGD(TAG, "Enabled pull-up on RX pin %d", this->rx_pin_);
     }
 
 }
